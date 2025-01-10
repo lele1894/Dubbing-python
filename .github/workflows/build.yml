@@ -9,7 +9,7 @@ on:
       version:
         description: '版本号 (例如: v1.0.0)'
         required: true
-        default: 'v0.1.0'
+        default: 'v1.0.0'
       prerelease:
         description: '是否为预发布版本'
         required: true
