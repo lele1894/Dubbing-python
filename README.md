@@ -98,4 +98,4 @@ python gui.py
 - MoviePy: 视频处理
 - PyTorch: 深度学习框架
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference 
+以上由"Cursor"生成
