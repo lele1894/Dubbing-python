@@ -81,7 +81,7 @@ def get_model(callback=None):
         if os.path.exists(cache_file):
             model = torch.load(cache_file)
         else:
-            model = whisper.load_model("medium", download_root=CACHE_DIR)
+            model = whisper.load_model("base", download_root=CACHE_DIR)
             torch.save(model, cache_file)
         logger.info("正在加载Whisper模型...")
         try:

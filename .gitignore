@@ -1,0 +1,16 @@
+# 忽略以下文件夹
+model_cache/
+audio/
+output/
+subtitles/
+
+# 但保留说明文件
+!model_cache/说明.txt
+!audio/说明.txt
+!output/说明.txt
+!subtitles/说明.txt
+
+# 忽略临时文件
+*.pyc
+__pycache__/
+.DS_Store 

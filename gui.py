@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                            QMessageBox, QGroupBox, QSlider, QTabWidget)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QAudio
+from PyQt5.QtGui import QIcon
 import asyncio
 import app as dubbing_app
 from edge_tts import Communicate
@@ -158,6 +159,8 @@ class DubbingThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        # 设置应用图标
+        self.setWindowIcon(QIcon('app.ico'))
         self.initUI()
         self.setupMediaPlayer()
         self.current_en_srt = None
@@ -691,6 +694,8 @@ def main():
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
     app = QApplication(sys.argv)
+    # 设置应用程序图标
+    app.setWindowIcon(QIcon('app.ico'))
     window = MainWindow()
     sys.exit(app.exec_())
 
