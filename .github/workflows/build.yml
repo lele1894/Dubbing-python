@@ -1,0 +1,81 @@
+name: 构建和发布
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+        default: 'v0.1.0'
+      prerelease:
+        description: '是否为预发布版本'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+        cache: 'pip'
+        
+    - name: 安装依赖项
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: 使用 PyInstaller 构建
+      run: |
+        pyinstaller VideodubbingAssistant.spec
+        
+    - name: 创建便携版本
+      run: |
+        cd dist
+        7z a -tzip VideodubbingAssistant-portable.zip VideodubbingAssistant
+        
+    - name: 获取版本
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "prerelease=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "prerelease=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+        
+    - name: 创建发布
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        name: Release ${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: ${{ steps.get_version.outputs.prerelease }}
+        body: |
+          视频配音助手 ${{ steps.get_version.outputs.version }}
+          
+          ### 更新内容
+          
+          - 自动构建发布
+          - 便携版本打包
+          
+          ### 下载说明
+          
+          - VideodubbingAssistant-portable.zip: 便携版，解压后直接运行
+        files: |
+          ./dist/VideodubbingAssistant-portable.zip 

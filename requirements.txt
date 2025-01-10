@@ -10,3 +10,4 @@ imageio-ffmpeg>=0.4.3
 proglog>=0.1.9
 tqdm>=4.11.2
 PyQt5==5.15.9
+pyinstaller==6.5.0
