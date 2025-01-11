@@ -37,6 +37,12 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
         
+    - name: 下载 FFmpeg
+      run: |
+        Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "ffmpeg.zip"
+        Expand-Archive ffmpeg.zip -DestinationPath .
+        mv ffmpeg-*-essentials_build/bin/ffmpeg.exe dist/VideodubbingAssistant/
+        
     - name: 使用 PyInstaller 构建
       run: |
         pyinstaller VideodubbingAssistant.spec
@@ -71,11 +77,18 @@ jobs:
           
           ### 更新内容
           
-          - 自动构建发布
-          - 便携版本打包
+          - 界面优化
+          - 修复已知问题
+          - 提升稳定性
           
           ### 下载说明
           
           - VideodubbingAssistant-portable.zip: 便携版，解压后直接运行
+          
+          ### 系统要求
+          
+          - Windows 10 或更高版本
+          - 4GB 以上内存
+          - 建议有 NVIDIA GPU（可加速处理）
         files: |
           ./dist/VideodubbingAssistant-portable.zip 

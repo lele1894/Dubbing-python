@@ -170,6 +170,22 @@ class MainWindow(QMainWindow):
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFormat("%p%")
         
+        # 设置日志文本框样式
+        self.log_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #2b2b2b;
+                color: #a9b7c6;
+                font-family: Consolas, Monaco, monospace;
+                font-size: 12px;
+                padding: 5px;
+            }
+        """)
+        
+        # 添加时间戳格式化
+        self.log_format = "{time} {level}: {message}"
+        
+        self.start_time = None  # 添加计时器变量
+        
     def setupMediaPlayer(self):
         # 直接使用旧版本的方式，避免版本兼容性问题
         self.media_player = QMediaPlayer()
@@ -192,13 +208,18 @@ class MainWindow(QMainWindow):
             
     def initUI(self):
         self.setWindowTitle('视频配音助手')
-        self.setMinimumWidth(1000)
+        self.setMinimumWidth(1200)  # 加宽界面
         self.setMinimumHeight(800)
         
         # 创建主窗口部件和布局
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
+        main_layout = QHBoxLayout(main_widget)  # 改为水平布局
+        
+        # 左侧控制面板
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 10, 0)  # 添加右边距
         
         # 本地视频选择
         video_group = QGroupBox("视频输入")
@@ -227,7 +248,7 @@ class MainWindow(QMainWindow):
         video_layout.addLayout(button_layout)
         
         video_group.setLayout(video_layout)
-        layout.addWidget(video_group)
+        left_layout.addWidget(video_group)
         
         # 字幕编辑区域
         subtitle_group = QGroupBox("字幕编辑")
@@ -263,7 +284,7 @@ class MainWindow(QMainWindow):
         subtitle_layout.addLayout(subtitle_buttons_layout)
         
         subtitle_group.setLayout(subtitle_layout)
-        layout.addWidget(subtitle_group)
+        left_layout.addWidget(subtitle_group)
         
         # 配音选择
         voice_group = QGroupBox("配音选择")
@@ -274,6 +295,7 @@ class MainWindow(QMainWindow):
         region_label = QLabel('区域:')
         self.region_combo = QComboBox()
         self.region_combo.addItems(['中国大陆', '中国香港', '中国台湾'])
+        self.region_combo.setCurrentText('中国台湾')
         self.region_combo.currentTextChanged.connect(self.update_voice_list)
         region_layout.addWidget(region_label)
         region_layout.addWidget(self.region_combo)
@@ -333,10 +355,22 @@ class MainWindow(QMainWindow):
         voice_layout.addLayout(original_volume_layout)
         
         voice_group.setLayout(voice_layout)
-        layout.addWidget(voice_group)
+        left_layout.addWidget(voice_group)
         
-        # 初始化语音列表
-        self.update_voice_list('中国大陆')
+        # 进度条和开始按钮放在左侧底部
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("%p%")
+        left_layout.addWidget(self.progress_bar)
+        
+        self.start_button = QPushButton('开始处理')
+        self.start_button.clicked.connect(self.start_processing)
+        left_layout.addWidget(self.start_button)
+        
+        # 右侧日志面板
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(10, 0, 0, 0)  # 添加左边距
         
         # 日志显示
         log_group = QGroupBox("处理日志")
@@ -345,18 +379,72 @@ class MainWindow(QMainWindow):
         self.log_text.setReadOnly(True)
         log_layout.addWidget(self.log_text)
         log_group.setLayout(log_layout)
-        layout.addWidget(log_group)
+        right_layout.addWidget(log_group)
         
-        # 进度条
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFormat("%p%")
-        layout.addWidget(self.progress_bar)
+        # 设置左右面板的宽度比例
+        main_layout.addWidget(left_panel, 65)  # 左侧占65%
+        main_layout.addWidget(right_panel, 35)  # 右侧占35%
         
-        # 开始按钮
-        self.start_button = QPushButton('开始处理')
-        self.start_button.clicked.connect(self.start_processing)
-        layout.addWidget(self.start_button)
+        # 设置进度条样式
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid grey;
+                border-radius: 5px;
+                text-align: center;
+                height: 25px;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                width: 10px;
+                margin: 0.5px;
+            }
+        """)
+        
+        # 美化按钮样式
+        button_style = """
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+            QPushButton:pressed {
+                background-color: #0D47A1;
+            }
+            QPushButton:disabled {
+                background-color: #BDBDBD;
+            }
+        """
+        
+        self.start_button.setStyleSheet(button_style)
+        self.preview_button.setStyleSheet(button_style)
+        
+        # 设置分组框样式
+        group_style = """
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #BDBDBD;
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 15px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """
+        
+        for group in [video_group, subtitle_group, voice_group, log_group]:
+            group.setStyleSheet(group_style)
+        
+        # 初始化台湾区域的声音列表
+        self.update_voice_list('中国台湾')
         
         self.show()
     
@@ -457,8 +545,36 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.warning(self, '错误', '请选择有效的视频文件')
         
-    def log(self, message):
-        self.log_text.append(message)
+    def log(self, message, level="INFO"):
+        """
+        格式化输出日志
+        :param message: 日志消息
+        :param level: 日志级别 (INFO/WARNING/ERROR)
+        """
+        from datetime import datetime
+        time_str = datetime.now().strftime("%H:%M:%S")
+        
+        # 根据日志级别设置颜色
+        color = {
+            "INFO": "#a9b7c6",
+            "WARNING": "#ffc66d", 
+            "ERROR": "#ff6b68"
+        }.get(level, "#a9b7c6")
+        
+        formatted_msg = self.log_format.format(
+            time=time_str,
+            level=level.ljust(7),
+            message=message
+        )
+        
+        # 使用HTML格式添加颜色
+        html_msg = f'<span style="color: {color}">{formatted_msg}</span>'
+        self.log_text.append(html_msg)
+        
+        # 自动滚动到底部
+        self.log_text.verticalScrollBar().setValue(
+            self.log_text.verticalScrollBar().maximum()
+        )
         
     def cleanup_preview(self):
         """清理预览相关资源"""
@@ -546,6 +662,14 @@ class MainWindow(QMainWindow):
             self.subtitle_thread.error.connect(self.on_subtitle_error)
             self.subtitle_thread.start()
             
+        # 开始计时
+        from datetime import datetime
+        self.start_time = datetime.now()
+        
+        # 记录开始时间
+        self.log("开始处理...", "INFO")
+        self.log(f"开始时间: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}", "INFO")
+            
     def on_auto_subtitles_generated(self, srt_files):
         en_srt, cn_srt = srt_files
         self.current_en_srt = en_srt
@@ -562,6 +686,13 @@ class MainWindow(QMainWindow):
         
     def process_with_subtitles(self):
         video_path = self.video_path_edit.text()
+        
+        # 添加更详细的处理信息
+        self.log("开始处理视频配音...", "INFO")
+        self.log(f"视频文件: {os.path.basename(video_path)}", "INFO")
+        self.log(f"选择的配音: {self.voice_combo.currentText()}", "INFO")
+        self.log(f"配音速度: {self.speed_slider.value() / 100.0}x", "INFO")
+        self.log(f"原音量: {self.original_volume_slider.value()}%", "INFO")
         
         # 创建处理线程
         self.dubbing_thread = DubbingThread(
@@ -581,23 +712,54 @@ class MainWindow(QMainWindow):
         self.dubbing_thread.start()
         
     def on_processing_finished(self, output_path):
+        from datetime import datetime
+        end_time = datetime.now()
+        duration = end_time - self.start_time
+        
+        # 格式化耗时
+        hours = duration.seconds // 3600
+        minutes = (duration.seconds % 3600) // 60
+        seconds = duration.seconds % 60
+        
+        time_str = []
+        if hours > 0:
+            time_str.append(f"{hours}小时")
+        if minutes > 0:
+            time_str.append(f"{minutes}分钟")
+        time_str.append(f"{seconds}秒")
+        
         self.progress_bar.setMaximum(100)
         self.progress_bar.setValue(100)
         self.start_button.setEnabled(True)
-        self.log(f"处理完成！输出文件：{output_path}")
         
-        reply = QMessageBox.question(
-            self,
-            '处理完成',
-            f'视频处理完成！\n输出文件：{output_path}\n\n是否打开输出文件夹？',
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes
-        )
-        
-        if reply == QMessageBox.Yes:
-            os.startfile(os.path.dirname(output_path))
+        # 添加详细的完成信息，使用完整路径
+        self.log("处理完成!", "INFO")
+        self.log(f"输出文件: {os.path.abspath(output_path)}", "INFO")
+        self.log(f"文件大小: {os.path.getsize(output_path) / 1024 / 1024:.1f}MB", "INFO")
+        self.log(f"总耗时: {' '.join(time_str)}", "INFO")
+        self.log(f"结束时间: {end_time.strftime('%Y-%m-%d %H:%M:%S')}", "INFO")
+        self.log("=" * 50, "INFO")
         
     def on_processing_error(self, error_message):
+        from datetime import datetime
+        if self.start_time:  # 如果有开始时间才显示耗时
+            end_time = datetime.now()
+            duration = end_time - self.start_time
+            hours = duration.seconds // 3600
+            minutes = (duration.seconds % 3600) // 60
+            seconds = duration.seconds % 60
+            
+            time_str = []
+            if hours > 0:
+                time_str.append(f"{hours}小时")
+            if minutes > 0:
+                time_str.append(f"{minutes}分钟")
+            time_str.append(f"{seconds}秒")
+            
+            self.log(f"处理失败! 耗时: {' '.join(time_str)}", "ERROR")
+        else:
+            self.log("处理失败!", "ERROR")
+        
         self.progress_bar.setMaximum(100)
         self.progress_bar.setValue(0)
         self.start_button.setEnabled(True)
