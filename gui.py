@@ -343,11 +343,11 @@ class MainWindow(QMainWindow):
         # 原音频音量控制
         original_volume_layout = QHBoxLayout()
         original_volume_label = QLabel('原音频音量:')
-        self.original_volume_value_label = QLabel('10%')  # 添加音量数值显示
+        self.original_volume_value_label = QLabel('5%')  # 添加音量数值显示
         self.original_volume_slider = QSlider(Qt.Horizontal)
         self.original_volume_slider.setMinimum(0)
         self.original_volume_slider.setMaximum(100)
-        self.original_volume_slider.setValue(10)  # 默认10%音量
+        self.original_volume_slider.setValue(5)  # 默认10%音量
         self.original_volume_slider.valueChanged.connect(self.setOriginalVolume)  # 添加新的连接
         original_volume_layout.addWidget(original_volume_label)
         original_volume_layout.addWidget(self.original_volume_slider)
